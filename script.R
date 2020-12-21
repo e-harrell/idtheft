@@ -4,7 +4,6 @@
 library(dplyr)
 library(car)
 library(ggplot2)
-library(ResourceSelection)
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
 #https://www.icpsr.umich.edu/web/NACJD/studies/36829
@@ -282,3 +281,5 @@ chisq.test(its1$its.idtheft,its1$its.ethnicr)
 chisq.test(its1$its.idtheft,its1$its.prevent_total)
 chisq.test(its1$its.idtheft,its1$its.OUTSIDE_PAST_YEARR)
 chisq.test(its1$its.idtheft,its1$its.notify_breachr)
+
+
