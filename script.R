@@ -4,7 +4,7 @@
 library(dplyr)
 library(car)
 library(ggplot2)
-library(generalhoslem)
+library(ResourceSelection)
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
 #https://www.icpsr.umich.edu/web/NACJD/studies/36829
@@ -173,7 +173,10 @@ table(its$notify_breach,its$notify_breachr)
 
 #exploratory data analysis
 #Outcome variable
-#Past year identity theft - 90% of the sample reported no identity theft .
+#Past year identity theft - About 11% of the sample reported at least one type of identity
+#theft (misuse of an existing account, misuse of personal information to 
+#open new account or misuse of personal information for other fraudulent
+#purposes) in the past year while 89% of the sample reported no identity theft .
 ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) + 
   geom_bar(stat = "count", fill="lightgreen") +
   stat_count(geom = "text", colour = "black", size = 3.5,
@@ -185,7 +188,7 @@ ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) +
 
 #Predictors- 
 #Annual Household Income-About two third of the sample were in households 
-#with annual incomes of less than $75,000 (65%) while the remainder were 
+#with annual incomes of less than $75,000 (65%) while the remainder (35%) were 
 #in households with annual incomes of at least $75,000 .
 ggplot(data = its, aes(x = incomer, y=..prop.., group=1)) + 
   geom_bar(stat = "count", fill="steelblue") +
@@ -244,7 +247,7 @@ ggplot(data = its, aes(x = prevent_total, y=..prop.., group=1)) +
 #Identity theft prior to the past year- 13% of the sample experienced identity
 #theft (misuse of an existing account, misuse of personal information to 
 #create new account or misuse of personal information for other fraudulent
-#purposes)prior to 12 months prior to their ITS interview. 
+#purposes) prior to 12 months prior to their ITS interview. 
 #The majority of the sample did not experience it.
 ggplot(data = its, aes(x = OUTSIDE_PAST_YEARR, y=..prop.., group=1)) + 
   geom_bar(stat = "count", fill="tan") +
@@ -269,37 +272,13 @@ ggplot(data = its, aes(x = notify_breachr, y=..prop.., group=1)) +
   xlab(NULL) +
   ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
 
-#model selection
-#making NAs for Unknown category on all variables
-levels(its$idtheft)[levels(its$idtheft)=='Unknown'] <- NA
-levels(its$incomer)[levels(its$incomer)=='Unknown'] <- NA
-levels(its$ager)[levels(its$ager)=='Unknown'] <- NA
-levels(its$ethnicr)[levels(its$ethnicr)=='Unknown'] <- NA
-levels(its$sexr)[levels(its$sexr)=='Unknown'] <- NA
-levels(its$prevent_total)[levels(its$prevent_total)=='Unknown'] <- NA
-levels(its$notify_breachr)[levels(its$notify_breachr)=='Unknown'] <- NA
-levels(its$OUTSIDE_PAST_YEARR)[levels(its$OUTSIDE_PAST_YEARR)=='Unknown'] <- NA
-#get number of missing cases 621 observations
-its<-cbind(data.frame(its$idtheft,its$incomer,its$ager,its$ethnicr,its$sexr,
-            its$prevent_total,its$notify_breachr,its$OUTSIDE_PAST_YEARR))
-sum(!complete.cases(its))
-#make dataset with only complete cases
-its1<-na.omit(its)
-#Fitting a logistic regression model to the data with all predictors 
-#predicting identity theft
-fit <- glm(its.idtheft ~ its.incomer  + its.ager + its.sexr+ its.ethnicr +
-             its.prevent_total + its.OUTSIDE_PAST_YEARR + 
-             its.notify_breachr, data = its1, family="binomial")
-
-#Interpreting initial model-
-summary(fit)
-#Goodness of fit
-hoslem.test(its1$idtheft, fitted(fit))
-#Odds ratios-
-round(exp(fit$coef),2)
-#Variance inflation factors-
-vif(fit)
-#residual plots for fit
-par(mfrow=c(2,2))
-plot(fit)
-
+#Chi-square analyses-Multiple Chi-square analyses show an association  between
+#past year identity theft and all of the predictors (p<0.05) with the 
+#exception of sex (p>0.05).
+chisq.test(its1$its.idtheft,its1$its.incomer)
+chisq.test(its1$its.idtheft,its1$its.ager)
+chisq.test(its1$its.idtheft,its1$its.sexr)
+chisq.test(its1$its.idtheft,its1$its.ethnicr)
+chisq.test(its1$its.idtheft,its1$its.prevent_total)
+chisq.test(its1$its.idtheft,its1$its.OUTSIDE_PAST_YEARR)
+chisq.test(its1$its.idtheft,its1$its.notify_breachr)
