@@ -282,7 +282,7 @@ table(its$idtheft, its$notify_breachr)
 #creating a dataset with with cases without missing data
 #separate out variables to be used
 idtheft<-its$idtheft
-incomer<-its$incomersexr<-its$sexr
+incomer<-its$incomer
 ager<-its$ager
 ethnicr<-its$ethnicr
 prevent_total<-its$prevent_total
@@ -300,7 +300,7 @@ levels(notify_breachr)[levels(notify_breachr)== "Unknown"]<-NA
 levels(sexr)[levels(sexr)== "Unknown"]<-NA
 #combine individual variables into a dataset & remove individual variables
 its1<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr))
-rm(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr)
+
 #Remove cases with NAs from dataset
 its1<-its1[complete.cases(its1),]
 #get number of cases in dataset with no NAs
