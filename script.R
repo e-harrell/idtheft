@@ -346,7 +346,7 @@ ager<-its$ager
 ethnicr<-its$ethnicr
 prevent_total<-its$prevent_total
 OUTSIDE_PAST_YEARR<-its$OUTSIDE_PAST_YEARR
-notify_breachr<-its$notify_breachr
+notify_breachr<-its$notify_breachr   
 sexr<-its$sexr
 #change unknown category to NA in each variable
 levels(idtheft)[levels(idtheft)== "Unknown"]<-NA
