@@ -1,5 +1,5 @@
 ---
-title: "Data Science Project Examining Identity Theft with the 2016 Identity Theft Supplement"
+title: "Data Science Project Examining Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
 author: "Erika Harrell"
 date: "12/21/2020"
 output: 
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Executive Summary
-###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that the majority of the predictors used (demographics, victim of identity theft prior to the past year, victim of a data breach, and using preventative behaviors) were related to past year identity theft. Gender was found to not be related to past year identity theft.
+###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft.
 
 ```{r libraries}
 #adding libraries
@@ -284,7 +284,7 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('Use of Preventative Behaviors')+
-  ggtitle("Use at least One Preventative Behaviors in the Past Year by Identity Theft") +
+  ggtitle("Use At Least One Preventative Behaviors in the Past Year by Identity Theft") +
   scale_fill_manual(values = c("green", "lightgreen"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -361,7 +361,7 @@ nrow(its1)
 ```
 
 ## Data analysis
-### Multiple chi-square analyses were run on the dataset with only completed cases. They show an association  between past year identity theft and all of the predictors (p < 0.05) with the exception of sex (p > 0.05).
+### Multiple chi-square analyses were run on the dataset with only completed cases. They show that  between past year identity theft was dependent on most of the predictors (p < 0.05) with the exception of sex (p > 0.05).
 
 ```{r chi, echo=FALSE}
 chisq.test(its1$idtheft,its1$incomer)
