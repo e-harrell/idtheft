@@ -284,7 +284,7 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('Use of Preventative Behaviors')+
-  ggtitle("Use of Preventative Behaviors in the Past Year by Identity Theft") +
+  ggtitle("Use of At Least One Preventative Behavior in the Past Year by Identity Theft") +
   scale_fill_manual(values = c("green", "lightgreen"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -304,7 +304,7 @@ rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
-  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+  geom_text(color = "white",aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('ID theft prior to the past year')+
@@ -365,9 +365,10 @@ its1<-its1[complete.cases(its1),]
 #get number of cases in dataset with no NAs
 nrow(its1)
 
-#Chi-square analyses-Multiple Chi-square analyses show an association  between
-#past year identity theft and all of the predictors (p<0.05) with the 
-#exception of sex (p>0.05).
+# Data analysis
+# Multiple chi-square analyses were run on the dataset with only completed cases. 
+#They show that  between past year identity theft was dependent on most of the predictors
+#(p < 0.05) with the exception of sex (p > 0.05).
 chisq.test(its1$idtheft,its1$incomer)
 chisq.test(its1$idtheft,its1$ager)
 chisq.test(its1$idtheft,its1$sexr)
