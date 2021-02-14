@@ -2,7 +2,9 @@
 title: "Data Science Project Examining Identity Theft with the 2016 Identity Theft Supplement"
 author: "Erika Harrell"
 date: "12/21/2020"
-output: pdf_document
+output: 
+  pdf_document: 
+    fig_width: 8
 ---
 
 ```{r setup, include=FALSE}
@@ -10,16 +12,17 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Executive Summary
-###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that the majority of the predictors used (demographics, victim of identity theft prior to the past year, victim of a data breach, and using preventative behaviors) were related to past year identity theft.
+###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that the majority of the predictors used (demographics, victim of identity theft prior to the past year, victim of a data breach, and using preventative behaviors) were related to past year identity theft. Gender was found to not be related to past year identity theft.
 
 ```{r libraries}
 #adding libraries
 library(dplyr)
 library(ggplot2)
+library(ggthemes)
 ```
 
 ## Loading Data
-### Data were downloaded from the 2016 ITS study [page](https://www.icpsr.umich.edu/web/NACJD/studies/36829) on the National Archives of Criminal Justice Data to a data subfolder in the project on R-Studio, unzipped, loaded into R-Studio and renamed with a shorter name. Due to the size of the datafile, the memory limit had to be increased prior to loading the data in R-Studio.
+### Data were downloaded from the 2016 ITS study [page](https://www.icpsr.umich.edu/web/NACJD/studies/36829) from the National Archives of Criminal Justice Data to a subfolder entitled "data" in the project on R-Studio, unzipped, loaded into R-Studio and renamed with a shorter name. Due to the size of the datafile, the memory limit had to be increased prior to loading the data in R-Studio.
 
 ```{r load, echo=FALSE}
 unzip("./data/ICPSR_36829-V1.zip", exdir="./data")
@@ -30,7 +33,7 @@ rm(da36829.0001)
 ```
 
 ## Data Wrangling
-### There were 125,165 total persons in the 2016 ITS. Only completed telephone and personal interviewswere used in the analysis which left 96,130 interviews or observations in the dataset.
+### There were 125,165 total persons in the 2016 ITS. Only completed telephone and personal interviews were used in the analysis which left 96,130 interviews or observations in the dataset.
 
 ```{r interview,echo=FALSE}
 Number <- table(data$VS008)
@@ -99,7 +102,7 @@ rm(sex,race,hispanic,income,age,
    notify_breach, data)
 ```
 
-### Look at created dataset.
+### Summary of the created dataset.
 
 ```{r summary, echo=FALSE}
 str(its)
@@ -107,7 +110,7 @@ summary(its)
 ```
 
 
-### Recoded variables, collasping categories and computing necessary variables for analysis.
+### Recoded variables, collapsing categories and computing necessary categories and variables for analysis.
 
 ```{r recode,echo=FALSE}
 
@@ -161,11 +164,11 @@ its$prevent_total<-"Unknown"
 its$prevent_total[its$CHCKD_CR_PAST_YR=="(01) Yes"|its$CHNG_PASSWORDS=="(01) Yes"|
                     its$PURCHASE_IDTHFT_INS=="(01) Yes"|its$SHRED_DOCS=="(01) Yes"|
                     its$VERIFY_CHARGES=="(01) Yes"| its$PROTECT_COMPUTER=="(01) Yes"|
-                    its$PURCHASE_IDTHFT_PROT=="(01) Yes"]<-"At least one preventative behavior"
+                    its$PURCHASE_IDTHFT_PROT=="(01) Yes"]<-"Yes"
 its$prevent_total[its$CHCKD_CR_PAST_YR=="(02) No" & its$CHNG_PASSWORDS=="(02) No"&
                     its$PURCHASE_IDTHFT_INS=="(02) No" & its$SHRED_DOCS=="(02) No"&
                     its$VERIFY_CHARGES=="(02) No" & its$PROTECT_COMPUTER=="(02) No"&
-                    its$PURCHASE_IDTHFT_PROT=="(02) No"]<-"No preventative behaviors"
+                    its$PURCHASE_IDTHFT_PROT=="(02) No"]<-"No"
 its$prevent_total<-as.factor(its$prevent_total)
 
 its$notify_breachr<-"Unknown"
@@ -177,7 +180,7 @@ its$notify_breachr<-as.factor(its$notify_breachr)
 
 ## Exploratory analysis
 ## Past year identity theft
-### About 11% of the sample reported at least one type of identity theft (misuse of an existing account, misuse of personal information to open new account or misuse of personal information for other fraudulent purposes) in the past year while 89% of the sample reported no identity theft.
+### About 11% of the sample reported at least one type of identity theft (misuse of an existing account, misuse of personal information to open new account, or misuse of personal information for other fraudulent purposes) in the past year while 89% of the sample reported no identity theft.
 
 ```{r outcome,echo=FALSE}
 ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) + 
@@ -186,119 +189,150 @@ ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) +
              aes(label = paste0(round(..prop..*100,digits=2),"%")),
              position=position_stack(vjust=0.5)) +
   ggtitle("Identity theft in the past 12 months")+
-  xlab(NULL) +
+  xlab("Past Year ID theft") +
   ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
 ```
 
 ## Annual household income
-### About two third of the sample were in householdswith annual incomes of less than $75,000 (65%) while the remainder (35%) were in households with annual incomes of at least $75,000 .
+### About two thirds of the sample were in households with annual incomes of less than $75,000 (65%) while the remainder (35%) were in households with annual incomes of at least $75,000. Within each income category the majority of respondents did not report experiencing identity theft in the past year. However, 15% of persons in households with incomes of $75,000 or more reported past year identity theft, compared to 9% of those in other households.
 
 ```{r income, echo=FALSE}
-ggplot(data = its, aes(x = incomer, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="steelblue") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Annual Household Income") + xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$incomer))
+x<-cbind(Count=table(its$incomer), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=incomer, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count..,..x..,sum)[..x..]) ), stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Annual Household Income')+
+  ggtitle("Annual Household Income by Identity Theft") +
+  scale_fill_manual(values = c("blue", "lightblue"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Race/Hispanic origin
-### 71% of cases were NonHispanic White while 29% were not NonHispanic White. 
+### Seventy one percent of respondents were NonHispanic White while 29% were belonged to other race/Hispanic origin groups. Twelve percent of nonHispanic Whites reported past year identity theft compared to 8% of other persons reported identity theft in the past year.
 
 ```{r race,echo=FALSE}
-ggplot(data = its, aes(x = ethnicr, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="purple") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Race/Hispanic origin") + xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$ethnicr))
+x<-cbind(Count=table(its$ethnicr), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=ethnicr, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count..,..x..,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Race/Hispanic origin')+
+  ggtitle("Race/Hispanic Origin by Identity Theft") +
+  scale_fill_manual(values = c("purple", "violet"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Age
-### 28% of the sample was age 50 to 64 while nearly one in four (24%) were age 35 to 49. 23% of the sample was age 65 or older. The remainder of the sample was under the age of 35.
+### Twenty eight percent of the sample was age 50 to 64 while nearly one in four (24%) were age 35 to 49. 23% of the sample was age 65 or older. The remainder of the sample was under the age of 35. Thirteen percent of persons age 35 to 49 reported experiencing past year identity theft, compared to 7% of persons age 18 to 34 and 9% of persons age 65 or older.
 
 ```{r age, echo=FALSE}
-ggplot(data = its, aes(x = ager, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="darkred") +
-  stat_count(geom = "text", colour = "white", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Age group") + xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$ager))
+x<-cbind(Count=table(its$ager), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=ager, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Age')+ggtitle("Age by Identity Theft") +
+  scale_fill_manual(values = c("darkred", "pink"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Gender
-### More than half of the sample (53%) was female while the remainder (47%) was male.
+### More than half of the sample (53%) was female while the remainder (47%) was male. Past year identity theft was experienced by 11% of males and a similar percentage of females.
 
 ```{r gender, echo=FALSE}
-ggplot(data = its, aes(x = sexr, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="orange") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Gender") + xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$sexr))
+x<-cbind(Count=table(its$sexr), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=sexr, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Gender')+ggtitle("Gender by Identity Theft") +
+  scale_fill_manual(values = c("darkorange", "yellow"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Preventative behaviors
-### Nearly nine out of ten persons in the sample (88%) used at least one of the preventative behaviors measured (checked bank or credit card statements, shredded or destroyed documents with financial information, checked credit report, changed passwords on financial accounts, used identity-theft security program on computer, Purchased identity-theft insurance or credit monitoring service, purchased identity-theft protection) in the past 12 months.
+### Nearly nine out of ten persons in the sample (88%) used at least one of the preventative behaviors measured (checked credit report, changed password on financial accounts, had credit monitoring services or identity theft insurance, shredded or destroyed documents containing personal information, checked bank or credit card statements for unfamiliar charges, purchased identity theft protection) in the past 12 months. Eighteen percent of respondents who did not know if they had used a preventative behavior in the past 12 months reported past year identity theft compared to 12% of those who had used at least 1 preventative behavior in the past 12 months. Surprisingly, only 2% of those who did not participate in any prventative behaviors in the past 12 months reported past year identity theft.
 
 ```{r prevent, echo=FALSE}
-ggplot(data = its, aes(x = prevent_total, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="lightblue") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Use of preventative behaviors in the past 12 months") + xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$prevent_total))
+x<-cbind(Count=table(its$prevent_total), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=prevent_total, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Use of Preventative Behaviors')+
+  ggtitle("Use at least One Preventative Behaviors in the Past Year by Identity Theft") +
+  scale_fill_manual(values = c("green", "lightgreen"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Identity theft prior to the past year
-### 13% of the sample experienced identity theft (misuse of an existing account, misuse of personal information to create new account or misuse of personal information for other fraudulent purposes) prior to 12 months prior to their ITS interview. The majority of the sample did not experience it.
+### Thirteen percent of the sample experienced identity theft (misuse of an existing account, misuse of personal information to create new account or misuse of personal information for other fraudulent purposes) prior to 12 months prior to their ITS interview. The majority of the sample did not experience it. About 40% of respondents who did not know if they were a victim of identity theft prior to the past year experienced identity theft in the past 12 months. This is compared to 10% of those who had no identity theft prior to the past year and 19% of those who had identity theft prior to the past year.
 
 ```{r prior, echo=FALSE}
-ggplot(data = its, aes(x = OUTSIDE_PAST_YEARR, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="tan") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Identity theft prior to the past 12 months")+
-  xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
+percentage<-prop.table(table(its$OUTSIDE_PAST_YEARR))
+x<-cbind(Count=table(its$OUTSIDE_PAST_YEARR), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
+ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('ID theft prior to the past year')+
+  ggtitle("Identity Theft Prior to the Past Year by Past Year Identity Theft") +
+  scale_fill_manual(values = c("brown", "tan"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Notified of exposure due to data breach
-### 12% of the sample reported that they were notified that their personal information was exposed during a data breach. The majority of the sample (88%) reported that they were not notified that their personal information was exposed during a data breach.
+### Twelve percent of the sample reported that they were notified that their personal information was exposed during a data breach. The majority of the sample (88%) reported that they were not notified that their personal information was exposed during a data breach.Of those who were notified that their information was exposed during a data breach, one in five (21%) reported being victims of identity theft in the past year. This is compared to 9% of those who were not notified that their personal information was exposed in a data breach being victims of past year identity theft.
 
 ```{r breach, echo=FALSE}
-ggplot(data = its, aes(x = notify_breachr, y=..prop.., group=1)) + 
-  geom_bar(stat = "count", fill="gold") +
-  stat_count(geom = "text", colour = "black", size = 3.5,
-             aes(label = paste0(round(..prop..*100,digits=2),"%")),
-             position=position_stack(vjust=0.5)) +
-  ggtitle("Notify personal information was exposed in a data breach")+
-  xlab(NULL) +
-  ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
-```
+percentage<-prop.table(table(its$notify_breachr))
+x<-cbind(Count=table(its$notify_breachr), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
 
-## Contingency tables 
-### Comparing each predictor with the outcome variable.
-
-```{r tables, echo=FALSE}
-table(its$idtheft, its$incomer)
-table(its$idtheft, its$ethnicr)
-table(its$idtheft, its$ager)
-table(its$idtheft, its$sexr)
-table(its$idtheft, its$prevent_total)
-table(its$idtheft, its$OUTSIDE_PAST_YEARR)
-table(its$idtheft, its$notify_breachr)
+ggplot(its, aes(x=notify_breachr, fill=idtheft))+
+  geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
+  geom_text(color = "white",aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
+                 label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
+            stat="count", position=position_dodge(0), vjust=1.5)+
+  ylab('Percent') + xlab('Notified of data breach in the past year')+
+  ggtitle("Notified of Personal Information Exposed in Data Breach in the Past Year by Past Year Identity Theft") +
+  scale_fill_manual(values = c("black", "darkgray"))+
+  scale_y_continuous(labels = scales::percent)+
+  theme_clean()+labs(fill = "Past Year Identity Theft")
 ```
 
 ## Data analysis
 ## More data wrangling
-### Make copies of each variable used in analysis.Unknown level on each individual variable was changed to NA. Individual  variables were combined into a single dataset and deleted individual variables. The individual variables were combined into a dataset (its1) and the individual variables were removed from the environment. Cases with NAs (614) were then removed from the dataset, leaving 95,516 cases in the dataset.
+### Make copies of each variable used in analysis. Unknown level on each individual variable was changed to NA. Individual  variables were combined into a single dataset and deleted individual variables. The individual variables were combined into a dataset (its1) and the individual variables were removed from the R environment. Cases with NAs (614) were then removed from the dataset, leaving 95,516 cases in the dataset.
 
 ```{r its1, echo=FALSE}
 idtheft<-its$idtheft
@@ -327,7 +361,7 @@ nrow(its1)
 ```
 
 ## Data analysis
-### Multiple chi-square analyses were run on the dataset with only completed cases. They show an association  between past year identity theft and all of the predictors (p<0.05) with the exception of sex (p>0.05).
+### Multiple chi-square analyses were run on the dataset with only completed cases. They show an association  between past year identity theft and all of the predictors (p < 0.05) with the exception of sex (p > 0.05).
 
 ```{r chi, echo=FALSE}
 chisq.test(its1$idtheft,its1$incomer)
