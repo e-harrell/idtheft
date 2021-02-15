@@ -5,6 +5,8 @@ library(dplyr)
 library(car)
 library(ggplot2)
 library(ggthemes)
+
+
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
 #https://www.icpsr.umich.edu/web/NACJD/studies/36829 and saved in data folder
