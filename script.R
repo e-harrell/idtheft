@@ -2,10 +2,9 @@
 #full script for project
 #adding libraries
 library(dplyr)
-library(car)
+library(caret)
 library(ggplot2)
 library(ggthemes)
-
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -215,7 +214,7 @@ ggplot(its, aes(x=incomer, fill=idtheft))+
 #identity theft compared to 8% of other persons reported identity theft
 #in the past year.
 percentage<-prop.table(table(its$ethnicr))
-cbind(Count=table(its$ethnicr), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$ethnicr), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=ethnicr, fill=idtheft))+
@@ -235,7 +234,7 @@ ggplot(its, aes(x=ethnicr, fill=idtheft))+
 #past year identity theft, compared to 7% of persons age 18 to 34 and 9% of persons age 65
 #or older.
 percentage<-prop.table(table(its$ager))
-cbind(Count=table(its$ager), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$ager), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=ager, fill=idtheft))+
@@ -253,7 +252,7 @@ ggplot(its, aes(x=ager, fill=idtheft))+
 #remainder (47%) was male. Past year identity theft was experienced by
 #11% of males and a similar percentage of females.
 percentage<-prop.table(table(its$sexr))
-cbind(Count=table(its$sexr), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$sexr), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=sexr, fill=idtheft))+
@@ -277,7 +276,7 @@ ggplot(its, aes(x=sexr, fill=idtheft))+
 #identity theft compared to 12% of those who had used at least 1 
 #preventative behavior in the past 12 months.
 percentage<-prop.table(table(its$prevent_total))
-cbind(Count=table(its$prevent_total), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$prevent_total), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=prevent_total, fill=idtheft))+
@@ -301,7 +300,7 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
 #to 10% of those who had no identity theft  prior to the past year and
 #19% of those who had identity theft prior to the past year.
 percentage<-prop.table(table(its$OUTSIDE_PAST_YEARR))
-cbind(Count=table(its$OUTSIDE_PAST_YEARR), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$OUTSIDE_PAST_YEARR), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
@@ -326,7 +325,7 @@ ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
 #information was exposed in a data breach being victims of
 #past year identity theft.
 percentage<-prop.table(table(its$notify_breachr))
-cbind(Count=table(its$notify_breachr), Percentage=round(percentage*100))
+x<-cbind(Count=table(its$notify_breachr), Percentage=round(percentage*100))
 rbind(Total = c(nrow(its),100),x)
 
 ggplot(its, aes(x=notify_breachr, fill=idtheft))+
@@ -361,11 +360,17 @@ levels(notify_breachr)[levels(notify_breachr)== "Unknown"]<-NA
 levels(sexr)[levels(sexr)== "Unknown"]<-NA
 #combine individual variables into a dataset & remove individual variables
 its1<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr))
-
-#Remove cases with NAs from dataset
-its1<-its1[complete.cases(its1),]
-#get number of cases in dataset with no NAs
-nrow(its1)
+#check dataset
+summary(its1)
+#get number of incomplete & complete cases (no NAs)
+incompletecases<-sum(!complete.cases(its1))
+completecases<-sum(complete.cases(its1))
+x<-c(incompletecases,completecases)
+percentage<-round(prop.table(x)*100)
+natable<-cbind(Number=x,Percent=percentage)
+row.names(natable)<-c('Cases with NAs','Cases without NAs')
+rbind(Total=c(nrow(its1),100),natable)
+rm(incompletecases,completecases,x,percentage,natable)
 
 # Data analysis
 # Multiple chi-square analyses were run on the dataset with only completed cases. 
