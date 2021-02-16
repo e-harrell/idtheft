@@ -5,6 +5,7 @@ library(dplyr)
 library(caret)
 library(ggplot2)
 library(ggthemes)
+library(car)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -183,7 +184,7 @@ ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) +
              aes(label = paste0(round(..prop..*100,digits=2),"%")),
              position=position_stack(vjust=0.5)) +
   ggtitle("Identity Theft in the Past 12 Months")+
-  xlab("Past Year ID theft") +
+  xlab("Past Year ID theft") + theme_clean()+
   ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
 
 #Predictors- 
