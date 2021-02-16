@@ -1,5 +1,5 @@
 ---
-title: "Data Science Project Examining Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
+title: "Predicting Past Year Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
 author: "Erika Harrell"
 date: "12/21/2020"
 output: 
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Executive Summary
-###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft.A logistic regression model predicting past year identity theft was trained on the data. All predictors were used, except for sex.
+###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft.A logistic regression model, with all predictors excluding sex, predicting past year identity theft was trained on the data. All predictors were found to be significant in predicting the outcome.
 
 ```{r libraries}
 #adding libraries
@@ -191,7 +191,7 @@ ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) +
              aes(label = paste0(round(..prop..*100,digits=2),"%")),
              position=position_stack(vjust=0.5)) +
   ggtitle("Identity theft in the past 12 months")+
-  xlab("Past Year ID theft") +
+  xlab("Past Year ID theft") + theme_clean()+
   ylab("Percent") + scale_y_continuous(labels=scales:: percent_format())
 ```
 
@@ -371,7 +371,8 @@ rm(incompletecases,completecases,x,percentage,natable)
 ```
 
 ## Data analysis
-### Chi-Square-Multiple chi-square analyses were run on the dataset with only completed cases. They show that  between past year identity theft was dependent on most of the predictors (p < 0.05) with the exception of sex (p > 0.05).
+## Chi-Square Analysis
+### Multiple chi-square analyses were run on the dataset with only completed cases. They show that  between past year identity theft was dependent on most of the predictors (p < 0.05) with the exception of sex (p > 0.05).
 
 ```{r chi, echo=FALSE}
 chisq.test(its1$idtheft,its1$incomer)
@@ -383,9 +384,15 @@ chisq.test(its1$idtheft,its1$OUTSIDE_PAST_YEARR)
 chisq.test(its1$idtheft,its1$notify_breachr)
 ```
 
-### Machine Learning-The dataset, its1, was split into training and testing data sets to in an attempt to train a logistics regression model predicting past year identity theft. Sixty percent of its1 was assigned to the training data while the remainind 40% went to the test dataset. The training dataset was examined for variables with near zero or zero variability. ITs whoed that no variables had zero or near zero variability.
+## Machine Learning
+## Setup
+### The dataset was split into training and testing datasets to in an attempt to train a logistics regression model predicting past year identity theft. Sixty percent of data was assigned to the training data while the remaining 40% went to the test dataset. The training dataset was examined for variables that had near zero or zero variability. There were no variables with zero or near zero variability.
 
-```{r mlsetup}
+```{r mlsetup, echo=FALSE}
+its1$ager<-relevel(its1$ager, ref = 4)
+its1$ethnicr<-relevel(its1$ethnicr, ref = 2)
+its1$notify_breachr<-relevel(its1$notify_breachr, ref =2)
+
 inTrain<-createDataPartition(its1$idtheft,p=.6, list=FALSE)
 training <- its1[inTrain,]
 testing <- its1[-inTrain,]
@@ -393,22 +400,27 @@ nzv<-nearZeroVar(training, saveMetrics = TRUE)
 nzv
 ```
 
-### A logistic regression model predicting past year identity theft was ran over the training data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. The results of the model showed that
+## Training Model
+### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05). Based on the odds ratios, 
 
 ```{r logistic}
 modFit <- glm(idtheft ~incomer+ager+ethnicr+prevent_total+
                 OUTSIDE_PAST_YEARR+notify_breachr,data=training,family="binomial")
-#get model estimates
+#Training model estimates
 summary(modFit)
-#Odds ratio
+#Odds ratios
 exp(modFit$coeff)
+```
+
+## Training Model Diagnostics
+
+```{r diagnostics}
 #graph of model residuals
 plot(modFit)
 #get variance inflation factors
 vif(modFit)
-#confidence intervals
-exp(confint(modFit))
 #anova- used for putting factors in and out of model
 anova(modFit, test = "Chisq")
 ```
 
+## Running Adjusted Model
