@@ -6,6 +6,7 @@ library(caret)
 library(ggplot2)
 library(ggthemes)
 library(car)
+library(caret)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
