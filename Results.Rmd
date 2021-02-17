@@ -370,7 +370,6 @@ rm(incompletecases,completecases,x,percentage,natable)
 
 ```
 
-## Data analysis
 ## Chi-Square Analysis
 ### Multiple chi-square analyses were run on the dataset with only completed cases. They show that  between past year identity theft was dependent on most of the predictors (p < 0.05) with the exception of sex (p > 0.05).
 
@@ -392,6 +391,7 @@ chisq.test(its1$idtheft,its1$notify_breachr)
 its1$ager<-relevel(its1$ager, ref = 4)
 its1$ethnicr<-relevel(its1$ethnicr, ref = 2)
 its1$notify_breachr<-relevel(its1$notify_breachr, ref =2)
+its1$prevent_total<-relevel(its1$prevent_total, ref=2)
 
 inTrain<-createDataPartition(its1$idtheft,p=.6, list=FALSE)
 training <- its1[inTrain,]
@@ -401,7 +401,7 @@ nzv
 ```
 
 ## Training Model
-### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05). Based on the odds ratios, 
+### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of the comparison of those age 25 to 34 to those age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.08 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the refernce group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.5 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.8.  One strange result from the model was that not using any of the preventative measures in the past 12 monmths reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
 
 ```{r logistic}
 modFit <- glm(idtheft ~incomer+ager+ethnicr+prevent_total+
