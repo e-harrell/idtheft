@@ -334,7 +334,7 @@ ggplot(its, aes(x=notify_breachr, fill=idtheft))+
 
 ## Data analysis
 ## More data wrangling
-### Make copies of each variable used in analysis. Unknown level on each individual variable was changed to NA. Individual  variables were combined into a single dataset and deleted individual variables. The individual variables were combined into a dataset (its1). The number of complete (cases with no NA values on any variable) and incomplete cases (cases with at least one variable with a value of NA) was summed from the dataset. There were 614 cases with a value of NA on atleast one variable with the remaining cases being complete cases
+### Make copies of each variable used in analysis. Unknown level on each individual variable was changed to NA. Individual  variables were combined into a single dataset and deleted individual variables. The individual variables were combined into a dataset (its1). The number of complete (cases with no NA values on any variable) and incomplete cases (cases with at least one variable with a value of NA) was summed from the dataset. There were 614 cases with a value of NA on at least one variable with the remaining cases being complete cases
 
 ```{r its1, echo=FALSE}
 idtheft<-its$idtheft
@@ -385,7 +385,7 @@ chisq.test(its1$idtheft,its1$notify_breachr)
 
 ## Machine Learning
 ## Setup
-### The dataset was split into training and testing datasets to in an attempt to train a logistics regression model predicting past year identity theft. Sixty percent of data was assigned to the training data while the remaining 40% went to the test dataset. The training dataset was examined for variables that had near zero or zero variability. There were no variables with zero or near zero variability.
+### The dataset was split into training and testing datasets to in an attempt to train a logistics regression model predicting past year identity theft. Sixty percent of data(57,679 cases) was assigned to the training data while the remaining 40% (38,451 cases) went in the test dataset. The training dataset was examined for variables that had near zero or zero variability. There were no variables with zero or near zero variability.
 
 ```{r mlsetup, echo=FALSE}
 its1$ager<-relevel(its1$ager, ref = 4)
@@ -401,26 +401,44 @@ nzv
 ```
 
 ## Training Model
-### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of the comparison of those age 25 to 34 to those age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.08 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the refernce group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.5 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.8.  One strange result from the model was that not using any of the preventative measures in the past 12 monmths reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
+### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. When the model was run 375 cases had to be removed due to missing data, resulting in 57,334 cases used in the model. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of the comparison of those age 25 to 34 to those age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.08 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the refernce group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.5 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.8.  One strange result from the model was that not using any of the preventative measures in the past 12 monmths reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
 
 ```{r logistic}
 modFit <- glm(idtheft ~incomer+ager+ethnicr+prevent_total+
                 OUTSIDE_PAST_YEARR+notify_breachr,data=training,family="binomial")
-#Training model estimates
 summary(modFit)
-#Odds ratios
+#Odds ratios for training model
 exp(modFit$coeff)
 ```
 
 ## Training Model Diagnostics
 
 ```{r diagnostics}
-#graph of model residuals
-plot(modFit)
-#get variance inflation factors
+#variance inflation factors for training model
 vif(modFit)
-#anova- used for putting factors in and out of model
+#anova- used for putting factors in and out of training model
 anova(modFit, test = "Chisq")
 ```
 
 ## Running Adjusted Model
+### Another model was ran that was the original training model without the predictor for the use of preventative behaviors in the past 12 months.
+
+```{r adjusted}
+
+modFit1 <- glm(idtheft ~ incomer+ager+ethnicr++OUTSIDE_PAST_YEARR+notify_breachr
+              ,data=training,family="binomial")
+#get model estimates for adjusted model
+summary(modFit1)
+#Odds ratios for adjusted model
+exp(modFit1$coeff)
+```
+
+## Adjusted model diagnostics
+
+```{r adjustdiag}
+#variance inflation factors for adjusted model
+vif(modFit1)
+#anova- used for putting factors in and out of adjusted model
+anova(modFit1, test = "Chisq")
+```
+
