@@ -401,9 +401,9 @@ nzv
 ```
 
 ## Training Model
-### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. When the model was run 375 cases had to be removed due to missing data, resulting in 57,334 cases used in the model. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of the comparison of those age 25 to 34 to those age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.08 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the refernce group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.5 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.8.  One strange result from the model was that not using any of the preventative measures in the past 12 monmths reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
+### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft. When the model was run 375 cases had to be removed due to missing data, resulting in 57,334 cases used in the model. The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of the comparison of those age 25 to 34 to those age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.08 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the reference group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.5 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.8.  One strange result from the model was that not using any of the preventative measures in the past 12 monmths reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
 
-```{r logistic}
+```{r train}
 modFit <- glm(idtheft ~incomer+ager+ethnicr+prevent_total+
                 OUTSIDE_PAST_YEARR+notify_breachr,data=training,family="binomial")
 summary(modFit)
@@ -412,6 +412,7 @@ exp(modFit$coeff)
 ```
 
 ## Training Model Diagnostics
+### Variance inflation factors were generated to determine if there was multicollinearity among the predictors in the training model. The variance inflaction factors for all predictors in the model were about 1, showing that there was little to no multicollinearity among the predictors. An Anova model was fit to the training model to determine which factors were predictive in the model. The result of this analysis showed that all predictors were predictive (p<.05).
 
 ```{r diagnostics}
 #variance inflation factors for training model
@@ -421,7 +422,7 @@ anova(modFit, test = "Chisq")
 ```
 
 ## Running Adjusted Model
-### Another model was ran that was the original training model without the predictor for the use of preventative behaviors in the past 12 months.
+### Another model was ran that was the original training model without the predictor for the use of preventative behaviors in the past 12 months. This was done due to the unusual result in the original training model. Similar results were obtained. The majority of the predictors were found to be statistically significant (p<.05). The only exception was that the comparison of persons age 35 to 45 to those age 25 to 34 was not statistically significant (p>0.5). According to the odds ratios for the adjusted model, the odds of persons in households with annual incomes or $75,000 or more being a victim of past year identity theft increased by  0.1 compared to other persons. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the reference group, age 35 to 49.  The odds of a nonHispanic White person being a victim of identity theft was 1.4 times the odds of a person of another racial/ethnic group being a victim.Being a victim of identity theft prior to the past year increased the odds of being a victim during the past 12 months by 1.7 compared to other persons. Being notified that personal information was exposed during a data brief increased the odds of being a victim of past year identity theft by 1.9 compared to those who were not notified of being a victim of a data breach.
 
 ```{r adjusted}
 
@@ -434,11 +435,32 @@ exp(modFit1$coeff)
 ```
 
 ## Adjusted model diagnostics
+### Variance inflation factors were generated on the adjusted model and showed little to no multicollinearity among the predictors. The Anova chi-square results showed that each of the predictors were predictive in the model.
 
 ```{r adjustdiag}
 #variance inflation factors for adjusted model
 vif(modFit1)
 #anova- used for putting factors in and out of adjusted model
 anova(modFit1, test = "Chisq")
+```
+
+## Test data
+
+```{r test}
+modFit2 <- glm(idtheft ~ incomer+ager+ethnicr++OUTSIDE_PAST_YEARR+notify_breachr
+              ,data=testing,family="binomial")
+#get model estimates for adjusted model ran over test data
+summary(modFit2)
+#Odds ratios for adjusted model ran over test data
+exp(modFit2$coeff)
+```
+
+## Diagnostics of adjusted model ran over test data
+
+```{r testdiag}
+#variance inflation factors for adjusted model ran over test data
+vif(modFit2)
+#anova- used for putting factors in and out of adjusted model ran over test data
+anova(modFit2, test = "Chisq")
 ```
 
