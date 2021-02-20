@@ -394,6 +394,7 @@ its1$ethnicr<-relevel(its1$ethnicr, ref = 2)
 its1$notify_breachr<-relevel(its1$notify_breachr, ref =2)
 its1$prevent_total<-relevel(its1$prevent_total, ref=2)
 
+set.seed(1234)
 inTrain<-createDataPartition(its1$idtheft,p=.6, list=FALSE)
 #put 60% in training (inTrain)
 training <- its1[inTrain,]
