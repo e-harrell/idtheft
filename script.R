@@ -428,3 +428,17 @@ vif(modFit1)
 #anova- used for putting factors in and out of model
 anova(modFit1, test = "Chisq")
 
+#compare both models
+anova(modFit,modFit1, test="Chisqu")
+
+#using adjusted model to make predictions in test data
+#prediction intervals
+pred1 <- predict(modFit1,newdata=testing,interval="prediction")
+#plot test data
+plot(testing$idtheft, pch=19,col="blue")
+#order values in test dataset
+ord <- order(testing$idtheft)
+#applies lines that show prediction intervals to plot
+matlines(testing$idtheft[ord],
+         pred1[ord,],type="l",,col=c(1,2,2),lty = c(1,1,1), lwd=3)
+
