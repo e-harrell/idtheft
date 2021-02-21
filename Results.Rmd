@@ -21,6 +21,9 @@ library(ggplot2)
 library(ggthemes)
 library(caret)
 library(car)
+library(ROCR) 
+library(Metrics)
+library(pROC)
 ```
 
 ## Loading Data
@@ -447,7 +450,7 @@ anova(modFit1, test = "Chisq")
 ```
 
 ## Comparing both models
-### The Anova Chi-Square test of the two models showed that
+### 
 
 ```{r compare}
 anova(modFit,modFit1,test="Chisq")
@@ -456,6 +459,23 @@ anova(modFit,modFit1,test="Chisq")
 ## Accuracy of both models
 
 ```{r accuracy}
+pred<-predict(modFit,newdata=training,type="response")
+pred<-ifelse(pred>0.5,1,0)
+pred1<-as.vector(predict(modFit1,newdata=training,type="response"))
+pred1<-ifelse(pred1>0.5,1,0)
 
+pr <- prediction(pred,training$idtheft)
+perf <- performance(pr,measure = "tpr",x.measure = "fpr")
+#plot ROC
+#plot(perf, title("ROC for training model")) 
+#print AUC score for training
+auc(training$idtheft,pred) 
+
+pr1 <- prediction(pred1,training$idtheft)
+perf1 <- performance(pr1,measure = "tpr",x.measure = "fpr") 
+#plot ROC
+#plot(perf1, title("ROC for adjusted model")) 
+#print AUC score for adjusted model
+auc(training$idtheft,pred1)
 ```
 
