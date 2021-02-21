@@ -7,6 +7,9 @@ library(ggplot2)
 library(ggthemes)
 library(car)
 library(caret)
+library(ROCR)
+library(pROC)
+library(Metrics)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -360,7 +363,7 @@ levels(prevent_total)[levels(prevent_total)== "Unknown"]<-NA
 levels(OUTSIDE_PAST_YEARR)[levels(OUTSIDE_PAST_YEARR)== "Unknown"]<-NA
 levels(notify_breachr)[levels(notify_breachr)== "Unknown"]<-NA
 levels(sexr)[levels(sexr)== "Unknown"]<-NA
-#combine individual variables into a dataset & remove individual variables
+#combine individual variables into a dataset 
 its1<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr))
 #check dataset
 summary(its1)
@@ -373,7 +376,8 @@ natable<-cbind(Number=x,Percent=percentage)
 row.names(natable)<-c('Cases with NAs','Cases without NAs')
 rbind(Total=c(nrow(its1),100),natable)
 rm(incompletecases,completecases,x,percentage,natable)
-
+#remove cases with NAs
+its1<-its1[complete.cases(its1),]
 # Data analysis
 # Multiple chi-square analyses were run on the dataset with only completed cases. 
 #They show that  between past year identity theft was dependent on most of the predictors
@@ -394,6 +398,24 @@ its1$ethnicr<-relevel(its1$ethnicr, ref = 2)
 its1$notify_breachr<-relevel(its1$notify_breachr, ref =2)
 its1$prevent_total<-relevel(its1$prevent_total, ref=2)
 
+#revise its1 to get all of identity theft victims & equal number
+#of nonvictims due to unbalanced data in identity theft
+#do table to get numbers of victims & nonvictims
+table(its1$idtheft)
+#get all victims
+victim<-its1[as.numeric(its1$idtheft)==2,]
+table(victim$idtheft)
+#get all nonvictims
+nonvictim<-its1[as.numeric(its1$idtheft)==1,]
+table(nonvictim$idtheft)
+#get subsample of nonvictims that is the same number of victims (10,258)
+set.seed(1234)
+nonvictim<-nonvictim[sample(nrow(nonvictim),10258),]
+#merge nonvictim & victim datasets
+its1<-rbind(victim,nonvictim)
+table(its1$idtheft)
+
+#create training and testing datasets
 set.seed(1234)
 inTrain<-createDataPartition(its1$idtheft,p=.6, list=FALSE)
 #put 60% in training (inTrain)
@@ -402,12 +424,12 @@ training <- its1[inTrain,]
 testing <- its1[-inTrain,]
 
 #check for predictors with no variability in training data
-nzv<-nearZeroVar(training, saveMetrics = TRUE)
+nzv<-nearZeroVar(its1, saveMetrics = TRUE)
 nzv
 
 #train logistic regression model using all predictors except sex
 modFit <- glm(idtheft ~ incomer+ager+ethnicr+prevent_total+OUTSIDE_PAST_YEARR+notify_breachr
-              ,data=training,family="binomial")
+              ,data=its1,family="binomial")
 #get model estimates
 summary(modFit)
 #Odds ratio
@@ -419,7 +441,7 @@ anova(modFit, test = "Chisq")
 
 #adjusted model without preventative measures
 modFit1 <- glm(idtheft ~ incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
-              ,data=training,family="binomial")
+              ,data=its1,family="binomial")
 #get model estimates
 summary(modFit1)
 #Odds ratio
@@ -430,16 +452,34 @@ vif(modFit1)
 anova(modFit1, test = "Chisq")
 
 #compare both models
-anova(modFit,modFit1, test="Chisqu")
+anova(modFit,modFit1, test="Chisq")
 
 #using adjusted model to make predictions in test data
-#prediction intervals
-pred1 <- predict(modFit1,newdata=testing,interval="prediction")
-#plot test data
-plot(testing$idtheft, pch=19,col="blue")
-#order values in test dataset
-ord <- order(testing$idtheft)
-#applies lines that show prediction intervals to plot
-matlines(testing$idtheft[ord],
-         pred1[ord,],type="l",,col=c(1,2,2),lty = c(1,1,1), lwd=3)
+#prediction probabilities for each model
+pred<-predict(modFit,newdata=its1,type="response")
+pred<-ifelse(pred>0.5,1,0)
+pred1<-as.vector(predict(modFit1,newdata=its1,type="response"))
+pred1<-ifelse(pred1>0.5,1,0)
+
+#plotting ROC and getting AUC score
+library(ROCR) 
+library(Metrics)
+pred<-predict(modFit,newdata=training,type="response")
+pred<-ifelse(pred>0.5,1,0)
+pred1<-as.vector(predict(modFit1,newdata=training,type="response"))
+pred1<-ifelse(pred1>0.5,1,0)
+
+pr <- prediction(pred,its1$idtheft)
+perf <- performance(pr,measure = "tpr",x.measure = "fpr")
+#plot ROC
+plot(perf, title("ROC for training model")) 
+#print AUC score for training
+auc(training$idtheft,pred) 
+
+pr1 <- prediction(pred1,training$idtheft)
+perf1 <- performance(pr1,measure = "tpr",x.measure = "fpr") 
+#plot ROC
+plot(perf1, title("ROC for adjusted model")) 
+#print AUC score for adjusted model
+auc(training$idtheft,pred1)
 
