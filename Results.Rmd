@@ -1,7 +1,7 @@
 ---
 title: "Exploring Past Year Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
 author: "Erika Harrell"
-date: "12/21/2020"
+date: "2/21/2021"
 output: 
   pdf_document: 
     fig_width: 8
@@ -10,6 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+### Disclaimer: The points and views expressed in this document do not necessarily reflect the views of the Bureau of Justice Statistics nor that of the U.S. Department of Justice.
 
 ## Executive Summary
 ###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft (p>0.5).
@@ -19,11 +20,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
-library(caret)
-library(car)
-library(ROCR) 
-library(Metrics)
-library(pROC)
 ```
 
 ## Loading Data
