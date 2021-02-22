@@ -1,5 +1,5 @@
 ---
-title: "Predicting Past Year Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
+title: "Exploring Past Year Identity Theft with the 2016 Identity Theft Supplement of the National Crime Victimization Survey"
 author: "Erika Harrell"
 date: "12/21/2020"
 output: 
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Executive Summary
-###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft.A logistic regression model, with all predictors excluding sex, predicting past year identity theft was trained on the data. All predictors were found to be significant in predicting the outcome.
+###  Data analysis was conducted to see if certain predictor variables were associated with past year identity theft. The data used in this analysis came from the 2016 Identity Theft Supplement (ITS) to the National Crime Victimization Survey (NCVS). The results of this analysis found that identity theft was dependent on the majority of the predictors used (age, race/Hispanic origin, annual household income, being a victim of identity theft prior to the past year, having personal information exposed due to a data breach, and using preventative behaviors). Gender was found to be independent of past year identity theft (p>0.5).
 
 ```{r libraries}
 #adding libraries
@@ -387,95 +387,3 @@ chisq.test(its1$idtheft,its1$prevent_total)
 chisq.test(its1$idtheft,its1$OUTSIDE_PAST_YEARR)
 chisq.test(its1$idtheft,its1$notify_breachr)
 ```
-
-## Machine Learning
-## Setup
-### The dataset was split into training and testing datasets to in an attempt to train a logistics regression model predicting past year identity theft. Sixty percent of data (57,310 cases) was assigned to the training data while the remaining 40% (38,206 cases) went in the test dataset. The training dataset was examined for variables that had near zero or zero variability. There were no variables with zero or near zero variability.
-
-```{r mlsetup, echo=FALSE}
-its1$ager<-relevel(its1$ager, ref = 4)
-its1$ethnicr<-relevel(its1$ethnicr, ref = 2)
-its1$notify_breachr<-relevel(its1$notify_breachr, ref =2)
-its1$prevent_total<-relevel(its1$prevent_total, ref=2)
-
-set.seed(1234)
-inTrain<-createDataPartition(its1$idtheft,p=.6, list=FALSE)
-training <- its1[inTrain,]
-testing <- its1[-inTrain,]
-nzv<-nearZeroVar(training, saveMetrics = TRUE)
-nzv
-```
-
-## Training Model
-### A logistic regression model predicting past year identity theft was trained to the data. All of the predictors with the exception of sex was included in the model. Sex was excluded due to the chi-square analysis showing that sex was independent of past year identity theft.  The results of the logistic regression model showed that all predictors were statistically significant in predicting past year identity theft (p<.05) with the exception of teh comparison of those age  25 to 34 to the reference group, persons age 35 to 49 (p>.05). Based on the odds ratios, the model showed that the odds of a person in households with annual incomes of $75,000 or more was 0.1 higher than that of a person in a household with annual incomes of less than $75,000. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the reference group, age 35 to 49. The odds of a Non-Hispanic White person being a victim of past year identity theft was 1.3 times that of other persons. Being a victim of identity theft prior to the past year increased the odds of being a victim of identity theft in the past 12 months by a factor of about 1.6 over other persons.  Being notified of personal information being exposed in a data breach increased the odds of being a victim of pst year identity theft by a factor of 1.7.  One strange result from the model was that not using any of the preventative measures in the past 12 months reduced the odds of being a victim of past year identity theft by a factor of 0.2. 
-
-```{r train}
-modFit <- glm(idtheft ~incomer+ager+ethnicr+prevent_total+
-                OUTSIDE_PAST_YEARR+notify_breachr,data=training,family="binomial")
-summary(modFit)
-#Odds ratios for training model
-exp(modFit$coeff)
-```
-
-## Training Model Diagnostics
-### Variance inflation factors were generated to determine if there was multicollinearity among the predictors in the training model. The variance inflaction factors for all predictors in the model were about 1, showing that there was little to no multicollinearity among the predictors. An Anova model was fit to the training model to determine which factors were predictive in the model. The result of this analysis showed that all predictors were predictive (p<.05).
-
-```{r diagnostics}
-#variance inflation factors for training model
-vif(modFit)
-#anova- used for putting factors in and out of training model
-anova(modFit, test = "Chisq")
-```
-
-## Running Adjusted Model
-### Another model was ran that was the original training model without the predictor for the use of preventative behaviors in the past 12 months. This was done due to the unusual result in the original training model. Similar results were obtained. The majority of the predictors were found to be statistically significant (p<.05). The only exception was that the comparison of persons age 35 to 45 to those age 25 to 34 was not statistically significant (p>0.5). According to the odds ratios for the adjusted model, the odds of persons in households with annual incomes or $75,000 or more being a victim of past year identity theft increased by  0.1 compared to other persons. Each of the age groups tested had a lower odds of being a victim of past year identity theft than those in the reference group, age 35 to 49.  The odds of a nonHispanic White person being a victim of identity theft was 1.4 times the odds of a person of another racial/ethnic group being a victim.Being a victim of identity theft prior to the past year increased the odds of being a victim during the past 12 months by 1.6 compared to other persons. Being notified that personal information was exposed during a data brief increased the odds of being a victim of past year identity theft by 1.9 compared to those who were not notified of being a victim of a data breach.
-
-```{r adjusted}
-modFit1 <- glm(idtheft ~ incomer+ager+ethnicr++OUTSIDE_PAST_YEARR+notify_breachr
-              ,data=training,family="binomial")
-#get model estimates for adjusted model
-summary(modFit1)
-#Odds ratios for adjusted model
-exp(modFit1$coeff)
-```
-
-## Adjusted model diagnostics
-### Variance inflation factors were generated on the adjusted model and showed little to no multicollinearity among the predictors. The Anova chi-square results showed that each of the predictors were predictive in the model.
-
-```{r adjustdiag}
-#variance inflation factors for adjusted model
-vif(modFit1)
-#anova- used for putting factors in and out of adjusted model
-anova(modFit1, test = "Chisq")
-```
-
-## Comparing both models
-### 
-
-```{r compare}
-anova(modFit,modFit1,test="Chisq")
-```
-
-## Accuracy of both models
-
-```{r accuracy}
-pred<-predict(modFit,newdata=training,type="response")
-pred<-ifelse(pred>0.5,1,0)
-pred1<-as.vector(predict(modFit1,newdata=training,type="response"))
-pred1<-ifelse(pred1>0.5,1,0)
-
-pr <- prediction(pred,training$idtheft)
-perf <- performance(pr,measure = "tpr",x.measure = "fpr")
-#plot ROC
-#plot(perf, title("ROC for training model")) 
-#print AUC score for training
-auc(training$idtheft,pred) 
-
-pr1 <- prediction(pred1,training$idtheft)
-perf1 <- performance(pr1,measure = "tpr",x.measure = "fpr") 
-#plot ROC
-#plot(perf1, title("ROC for adjusted model")) 
-#print AUC score for adjusted model
-auc(training$idtheft,pred1)
-```
-
