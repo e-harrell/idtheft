@@ -7,6 +7,8 @@ library(ggplot2)
 library(ggthemes)
 library(caret)
 library(car)
+library(caTools)
+library(pROC)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -116,7 +118,6 @@ levels(its$idtheft)
 #gender
 its$sexr<-recode_factor(its$sex, '(1) Male'='Male', '(2) Female'='Female',
                         '(8) Residue'='Unknown')
-
 table(its$sex,its$sexr)
 #look at levels
 levels(its$sexr)
@@ -154,21 +155,20 @@ its$hispanicr<-recode_factor(its$hispanic, "(1) Yes"="Hispanic",
 table(its$hispanic,its$hispanicr)
 
 #race & Hispanic origin
-its$ethnicr[its$racer=="White" & its$hispanicr=="NonHispanic"]<-"NonHispanic White"
-its$ethnicr[its$racer=="Black" & its$hispanicr=="NonHispanic"]<-"NonHispanic Black"
+its$ethnicr[its$racer=="White" & its$hispanicr=="NonHispanic"]<-"White"
+its$ethnicr[its$racer=="Black" & its$hispanicr=="NonHispanic"]<-"Black"
 its$ethnicr[its$hispanicr=="Hispanic"]<-"Hispanic"
-its$ethnicr[its$racer=="Other" & its$hispanicr=="NonHispanic"]<-"NonHispanic Other"
-its$ethnicr[its$racer=="2 or more races" & its$hispanicr=="NonHispanic"]<-"NonHispanic 2 or more races"
+its$ethnicr[its$racer=="Other" & its$hispanicr=="NonHispanic"]<-"Other race"
+its$ethnicr[its$racer=="2 or more races" & its$hispanicr=="NonHispanic"]<-"2 or more races"
+its$ethnicr<-as.factor(its$ethnicr)
 table(its$hispanicr,its$racer)
 table(its$ethnicr,its$hispanicr)
 table(its$ethnicr,its$racer)
-its$ethnicr<-as.factor(its$ethnicr)
 #look at levels
 levels(its$ethnicr)
 #reorder levels
-its$ethnicr<-factor(its$ethnicr,
-                     levels = c("NonHispanic White","NonHispanic Black","Hispanic",
-                                "NonHispanic Other", "NonHispanic 2 or more races"))
+its$ethnicr<-factor(its$ethnicr, levels = c("White","Black","Hispanic",
+                                "Other race", "2 or more races"))
 levels(its$ethnicr)
 
 #age
@@ -308,14 +308,14 @@ ggplot(its, aes(x=incomer, fill=idtheft))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
 
-#Race/Hispanic origin-71% of the sample were NonHispanic White while
-#One in ten (10%) respondents were NonHispanic Black. Hispanics
-#accounted for 13% of respondents. Persons were NonHispanic and of other
-#races accounted for 55 of the sample. Non Hispanic persons of 
-#2 or more races accounted for 1% of the sample. Identity theft appeared to
-#account for a larger proportion of NonHispanic Whites (12%) and persons
-#of 2 or more races 14% than NonHispanic Blacks (8%), Hispanics (7%) and
-#persons of other races 9%.
+#Race/Hispanic origin-71% of the sample were White while
+#One in ten (10%) respondents were Black. Hispanics
+#accounted for 13% of respondents. Persons who were of another
+#race accounted for 5% of the sample. Persons of 2 or more races 
+#accounted for 1% of the sample. Identity theft appeared to
+#account for a larger proportion of Whites (12%) and persons
+#of 2 or more races (14%) than Blacks (8%), Hispanics (7%) and
+#persons of other races (9%).
 
 percentage<-prop.table(table(its$ethnicr))
 x<-cbind(Count=table(its$ethnicr), Percentage=round(percentage*100))
@@ -480,8 +480,9 @@ its_clean<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_P
 #check dataset
 summary(its_clean)
 
-#get number of incomplete & complete cases (no NAs)-About 1% of the sample has incomplete (Unknown)
-#on at least 1 variable. Removing incomplete cases left
+#get number of incomplete & complete cases (no NAs)-
+#About 1% of the sample was an incomplete case (having a NA value 
+#on at least 1 variable). Removing incomplete cases left
 #95,516 cases in the dataset.
 incompletecases<-sum(!complete.cases(its_clean))
 completecases<-sum(complete.cases(its_clean))
@@ -592,18 +593,46 @@ chisq.test(its_clean$idtheft,its_clean$OUTSIDE_PAST_YEARR)
 chisq.test(its_clean$idtheft,its_clean$notify_breachr)
 
 #Machine learning with Logistic regression
-#k-fold cross validation
+#creating train and test data
 set.seed(1234)
-folds<-createFolds(its_clean$idtheft,k=10,returnTrain=TRUE)
-#see folds
-sapply(folds,length)
-#create data from fold1
-train1<-its_clean[folds[[1]],]
-#use fold 1 to train first model
+sampleSplit<-sample.split(its_clean$idtheft,SplitRatio=0.7)
+#train dataset-70% of cases
+trainSet<-its_clean[sampleSplit==TRUE,]
+#test dataset-30% of cases
+testSet<-its_clean[sampleSplit==FALSE,]
+#look at identity theft in train dataset
+percentage<-prop.table(table(trainSet$idtheft))
+x<-cbind(Count=table(trainSet$idtheft), Percentage=round(percentage*100))
+rbind(Total = c(nrow(trainSet),100),x)
+#look at identity theft in test dataset
+percentage<-prop.table(table(testSet$idtheft))
+x<-cbind(Count=table(testSet$idtheft), Percentage=round(percentage*100))
+rbind(Total = c(nrow(testSet),100),x)
+
 #train model
-train_model1<-glm(idtheft~.,data=train1,family="binomial")
-
+model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
+             ,data=trainSet,family="binomial")
 #look at model
-summary(train_model1)
+summary(model)
+#odds ratios for model
+exp(model$coeff)
+#variance inflation factors for model
+vif(model)
 
+#predicting in train data
+probabs<-predict(model,trainSet,type='response')
+#use .11 as cutoff since 11% of data reported ID theft
+preds<-ifelse(probabs>0.11,1,0)
+confusionMatrix(factor(preds),factor(as.numeric(trainSet$idtheft)-1))
 
+#predicting in test data
+probabs<-predict(model,testSet,type='response')
+#use .11 as cutoff since 11% of data reported ID theft
+preds<-ifelse(probabs>0.11,1,0)
+confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+
+#ROC curve
+myroc<-roc(testSet$idtheft,probabs)
+#the area under the ROC curve is 67% which indicates a poor model.
+auc(myroc)
+ggroc(myroc, color="black",linetype=2, size=1) + ggtitle("ROC curve")
