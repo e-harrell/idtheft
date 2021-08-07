@@ -1,19 +1,19 @@
 #WILL NEED TO CHANGE OUTCOME VARIABLE FOR PROJECT TO PREDICTING OVERALL IDENTITY THEFT
 #full script for project
 #adding libraries
-library(tidyr)
 library(reshape2)
 library(dplyr)
 library(ggplot2)
 library(ggthemes)
 library(caret)
+library(car)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
 #https://www.icpsr.umich.edu/web/NACJD/studies/36829 and saved in data folder
 unzip("./data/ICPSR_36829-V2.zip", exdir="./data")
 #have to increase R memory to load data
-memory.limit(20000)
+memory.limit(50000)
 #read in data from data folder
 load(file="./data/ICPSR_36829/DS0001/36829-0001-Data.rda")
 #create data file with shorter name
@@ -39,13 +39,6 @@ Number
 rm(Number)
 
 #Create smaller dataset with only variables needed for analysis
-#Demographic variables
-sex<-data$V3018
-race<-data$V3023A
-hispanic<-data$V3024A
-age<-data$V3014
-income<-data$V2026A
-
 #outcome variable
 #past year ID theft variables and bank and CC account variables
 pastyearbankacct<-data$VS010
@@ -56,6 +49,14 @@ existing_credit_card<-data$VS017
 other_existing_accts<-data$VS019
 open_new_acct<-data$VS041
 personal_info<-data$VS063
+
+#predictor variables
+#demographic variables
+sex<-data$V3018
+race<-data$V3023A
+hispanic<-data$V3024A
+age<-data$V3014
+income<-data$V2026A
 
 #prior to past year ID theft variable
 OUTSIDE_PAST_YEAR<-data$VS306
@@ -77,17 +78,17 @@ its<-cbind(data.frame(sex,race,hispanic,income, age,
                       pastyearbankacct, existing_bank, currentccacct, 
                       pastyearccacct, existing_credit_card, 
                       other_existing_accts, open_new_acct, personal_info,
-                      OUTSIDE_PAST_YEAR, 
-                      CHCKD_CR_PAST_YR, CHNG_PASSWORDS, PURCHASE_IDTHFT_INS, SHRED_DOCS,  
-                      VERIFY_CHARGES, PROTECT_COMPUTER, PURCHASE_IDTHFT_PROT, 
+                      OUTSIDE_PAST_YEAR, CHCKD_CR_PAST_YR, CHNG_PASSWORDS, 
+                      PURCHASE_IDTHFT_INS, SHRED_DOCS,VERIFY_CHARGES, 
+                      PROTECT_COMPUTER, PURCHASE_IDTHFT_PROT, 
                       notify_breach))
 
 #remove individual vector variables 
 rm(sex,race,hispanic,income,age,
      pastyearbankacct, existing_bank, currentccacct, pastyearccacct, 
    existing_credit_card, other_existing_accts, open_new_acct,personal_info,
-   OUTSIDE_PAST_YEAR, 
-   CHCKD_CR_PAST_YR, CHNG_PASSWORDS,  PURCHASE_IDTHFT_INS, SHRED_DOCS, 
+   OUTSIDE_PAST_YEAR,  CHCKD_CR_PAST_YR, CHNG_PASSWORDS, 
+   PURCHASE_IDTHFT_INS, SHRED_DOCS, 
    VERIFY_CHARGES, PROTECT_COMPUTER, PURCHASE_IDTHFT_PROT, 
    notify_breach)
 
@@ -266,6 +267,11 @@ levels(its$notify_breachr)
 #type of identity theft (misuse of an existing account, misuse of personal information to 
 #open new account or misuse of personal information for other fraudulent
 #purposes) in the past year while 89% of the sample reported no identity theft.
+
+percentage<-prop.table(table(its$idtheft))
+x<-cbind(Count=table(its$idtheft), Percentage=round(percentage*100))
+rbind(Total = c(nrow(its),100),x)
+
 ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) + 
   geom_bar(stat = "count", fill="lightgreen") +
   stat_count(geom = "text", colour = "black", size = 3.5,
@@ -297,7 +303,7 @@ ggplot(its, aes(x=incomer, fill=idtheft))+
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('Annual Household Income')+
-  ggtitle("Annual Household Income by Identity Theft") +
+  ggtitle("Annual Household Income by Past Year Identity Theft") +
   scale_fill_manual(values = c("blue", "lightblue"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -321,7 +327,7 @@ ggplot(its, aes(x=ethnicr, fill=idtheft))+
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('Race/Hispanic origin')+
-  ggtitle("Race/Hispanic Origin by Identity Theft") +
+  ggtitle("Race/Hispanic Origin by Past Year Identity Theft") +
   scale_fill_manual(values = c("purple", "violet"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -341,7 +347,7 @@ ggplot(its, aes(x=ager, fill=idtheft))+
   geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
-  ylab('Percent') + xlab('Age')+ggtitle("Age by Identity Theft") +
+  ylab('Percent') + xlab('Age')+ggtitle("Age by Past Year Identity Theft") +
   scale_fill_manual(values = c("darkred", "pink"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -360,7 +366,7 @@ ggplot(its, aes(x=sexr, fill=idtheft))+
   geom_text(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..], 
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
-  ylab('Percent') + xlab('Gender')+ggtitle("Gender by Identity Theft") +
+  ylab('Percent') + xlab('Gender')+ggtitle("Gender by Past Year Identity Theft") +
   scale_fill_manual(values = c("darkorange", "yellow"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -388,7 +394,7 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
                  label=scales::percent(..count../tapply(..count.., ..x.. ,sum)[..x..]) ),
             stat="count", position=position_dodge(0), vjust=1.5)+
   ylab('Percent') + xlab('Use of Preventative Behaviors')+
-  ggtitle("Use of At Least One Preventative Behavior in the Past Year by Identity Theft") +
+  ggtitle("Use of At Least One Preventative Behavior in the Past Year by Past Year Identity Theft") +
   scale_fill_manual(values = c("green", "lightgreen"))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
@@ -447,7 +453,7 @@ ggplot(its, aes(x=notify_breachr, fill=idtheft))+
 #remove vectors used to make tables
 rm(x,percentage)
 
-#creating a dataset with with cases without missing data
+#creating datasets without missing data
 #separate out variables to be used
 idtheft<-its$idtheft
 incomer<-its$incomer
@@ -457,7 +463,7 @@ prevent_total<-its$prevent_total
 OUTSIDE_PAST_YEARR<-its$OUTSIDE_PAST_YEARR
 notify_breachr<-its$notify_breachr   
 sexr<-its$sexr
-#change unknown category to NA in each variable
+#change unknown category to NA in variables with unknown category
 levels(prevent_total)
 levels(prevent_total)[levels(prevent_total)== "Unknown"]<-NA
 levels(prevent_total)
@@ -468,10 +474,12 @@ levels(notify_breachr)
 levels(notify_breachr)[levels(notify_breachr)== "Unknown"]<-NA
 levels(notify_breachr)
 
-#combine individual variables into a dataset 
+#combine individual variables into a dataset  
 its_clean<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr))
+
 #check dataset
 summary(its_clean)
+
 #get number of incomplete & complete cases (no NAs)-About 1% of the sample has incomplete (Unknown)
 #on at least 1 variable. Removing incomplete cases left
 #95,516 cases in the dataset.
@@ -486,66 +494,87 @@ rbind(Total=c(nrow(its_clean),100),natable)
 #remove cases with NAs
 its_clean<-its_clean[complete.cases(its_clean),]
 
-#remove vectors used to create table with complete cases
-rm(incompletecases,completecases,x,percentage,natable)
-
-#remove individual vectors
-rm(ager,ethnicr,idtheft,incomer,notify_breachr,OUTSIDE_PAST_YEARR,
-   prevent_total,sexr)
-
-#look at clean dataset
+#check cleaned dataset with only complete cases
 summary(its_clean)
 
+#remove vectors used to create table and data with complete cases 
+rm(incompletecases,completecases,x,percentage,natable, 
+   ager,ethnicr,idtheft,incomer,notify_breachr,OUTSIDE_PAST_YEARR,
+   prevent_total,sexr)
+
 #correlation
+#create separate dataset with all numeric data
+its_clean_num<-its_clean
 #make variables numeric and start at zero
-table(its_clean$sexr)
-its_clean$sexr<-as.numeric(its_clean$sexr)-1
-table(its_clean$sexr)
+table(its_clean_num$sexr)
+its_clean_num$sexr<-as.numeric(its_clean_num$sexr)-1
+table(its_clean_num$sexr)
 
-table(its_clean$ethnicr)
-its_clean$ethnicr<-as.numeric(its_clean$ethnicr)-1
-table(its_clean$ethnicr)
+table(its_clean_num$ethnicr)
+its_clean_num$ethnicr<-as.numeric(its_clean_num$ethnicr)-1
+table(its_clean_num$ethnicr)
 
-table(its_clean$ager)
-its_clean$ager<-as.numeric(its_clean$ager)-1
-table(its_clean$ager)
+table(its_clean_num$ager)
+its_clean_num$ager<-as.numeric(its_clean_num$ager)-1
+table(its_clean_num$ager)
 
-table(its_clean$incomer)
-its_clean$incomer<-as.numeric(its_clean$incomer)-1
-table(its_clean$incomer)
+table(its_clean_num$incomer)
+its_clean_num$incomer<-as.numeric(its_clean_num$incomer)-1
+table(its_clean_num$incomer)
 
-table(its_clean$idtheft)
-its_clean$idtheft<-as.numeric(its_clean$idtheft)-1
-table(its_clean$idtheft)
+table(its_clean_num$idtheft)
+its_clean_num$idtheft<-as.numeric(its_clean_num$idtheft)-1
+table(its_clean_num$idtheft)
 
-table(its_clean$OUTSIDE_PAST_YEARR)
-its_clean$OUTSIDE_PAST_YEARR<-as.numeric(its_clean$OUTSIDE_PAST_YEARR)-1
-table(its_clean$OUTSIDE_PAST_YEARR)
+table(its_clean_num$OUTSIDE_PAST_YEARR)
+its_clean_num$OUTSIDE_PAST_YEARR<-as.numeric(its_clean_num$OUTSIDE_PAST_YEARR)-1
+table(its_clean_num$OUTSIDE_PAST_YEARR)
 
-table(its_clean$prevent_total)
-its_clean$prevent_total<-as.numeric(its_clean$prevent_total)-1
-table(its_clean$prevent_total)
+table(its_clean_num$prevent_total)
+its_clean_num$prevent_total<-as.numeric(its_clean_num$prevent_total)-1
+table(its_clean_num$prevent_total)
 
-table(its_clean$notify_breachr)
-its_clean$notify_breachr<-as.numeric(its_clean$notify_breachr)-1
-table(its_clean$notify_breachr)
+table(its_clean_num$notify_breachr)
+its_clean_num$notify_breachr<-as.numeric(its_clean_num$notify_breachr)-1
+table(its_clean_num$notify_breachr)
 
-#correlations-Looking at Pearson correlations , the predictors appear
-#to be relatively independent of each other with no moderate or strong
-#correlations in the dataset.
+#correlations-Looking at Pearson correlations of the variables,
+#the predictors appear to be relatively independent of 
+#each other with no moderate or strong correlations in the dataset.
 
 #create correlation matrix
-its_clean_cor<-round(cor(its_clean),2)
+its_clean_cor<-round(cor(its_clean_num),2)
 #highest absolute value of a correlation (strongest correlation)
 max(abs(its_clean_cor[its_clean_cor !=1]))
 #create correlation heatmap
 melted_its_clean_cor<-melt(its_clean_cor)
 head(melted_its_clean_cor)
+#replace values with full names of variables
+melted_its_clean_cor$Var1<-recode_factor(melted_its_clean_cor$Var1,
+                                         "idtheft"="Past year ID theft",
+                                         "incomer"="Household income",
+                                         "ager"="Age",
+                                         "ethnicr"="Race/Hispanic origin",
+                                         "prevent_total"="Preventative behavior",
+                                         "OUTSIDE_PAST_YEARR"="ID theft prior to past year",
+                                         "notify_breachr"="Data breach victim",
+                                         "sexr"="Sex")
+
+melted_its_clean_cor$Var2<-recode_factor(melted_its_clean_cor$Var2,
+                                         "idtheft"="Past year ID theft",
+                                         "incomer"="Household income",
+                                         "ager"="Age",
+                                         "ethnicr"="Race/Hispanic origin",
+                                         "prevent_total"="Preventative behavior",
+                                         "OUTSIDE_PAST_YEARR"="ID theft prior to past year",
+                                         "notify_breachr"="Data breach victim",
+                                         "sexr"="Sex")
+
 ggplot(data = melted_its_clean_cor, aes(x=Var1, y=Var2, fill=value)) + 
-  ggtitle("Correlation Matrix of Predictor and Outcome Variables")+
-  geom_tile()+ theme(axis.title =element_blank(),
-                     axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-                     legend.title = element_blank())+geom_text(aes(label=value), color="white")
+  ggtitle("Correlation Matrix of Variables")+
+  geom_tile()+ theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+  legend.title = element_blank(),axis.title=element_blank())+
+  geom_text(aes(label=value), color="white")
 
 #remove items for correlation
 rm(its_clean_cor,melted_its_clean_cor)
@@ -563,4 +592,18 @@ chisq.test(its_clean$idtheft,its_clean$OUTSIDE_PAST_YEARR)
 chisq.test(its_clean$idtheft,its_clean$notify_breachr)
 
 #Machine learning with Logistic regression
+#k-fold cross validation
+set.seed(1234)
+folds<-createFolds(its_clean$idtheft,k=10,returnTrain=TRUE)
+#see folds
+sapply(folds,length)
+#create data from fold1
+train1<-its_clean[folds[[1]],]
+#use fold 1 to train first model
+#train model
+train_model1<-glm(idtheft~.,data=train1,family="binomial")
+
+#look at model
+summary(train_model1)
+
 
