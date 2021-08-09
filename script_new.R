@@ -6,9 +6,9 @@ library(dplyr)
 library(ggplot2)
 library(ggthemes)
 library(caret)
-library(car)
 library(caTools)
 library(pROC)
+
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -28,17 +28,16 @@ rm(da36829.0001)
 #Just looking at the completed  telephone and personal interviews leaves 
 #96,130 interviews or observations in the dataset.
 #Get interview status for all cases 
-Number<-addmargins(table(data$VS008))
-Number<-cbind(Number,
-              Percentage=round(c((Number[[1]]/nrow(data))*100,(Number[[2]]/nrow(data))*100,(Number[[3]]/nrow(data))*100,(Number[[4]]/nrow(data))*100),digits=1))
-Number
+
+x<-cbind(Count=table(data$VS008),Percentage=round(prop.table(table(data$VS008))*100))
+rbind(x,Total = c(nrow(data),100))
+
 #select only cases with ITS interviews
 data<-data[data$VS008 != levels(data$VS008)[3],]
-Number<-addmargins(table(data$VS008))
-Number<-cbind(Number,
-              Percentage=round(c((Number[[1]]/nrow(data))*100,(Number[[2]]/nrow(data))*100,(Number[[3]]/nrow(data))*100,(Number[[4]]/nrow(data))*100),digits=1))
-Number
-rm(Number)
+x<-cbind(Count=table(data$VS008),Percentage=round(prop.table(table(data$VS008))*100))
+rbind(x,Total = c(nrow(data),100))
+
+rm(x)
 
 #Create smaller dataset with only variables needed for analysis
 #outcome variable
@@ -268,10 +267,9 @@ levels(its$notify_breachr)
 #open new account or misuse of personal information for other fraudulent
 #purposes) in the past year while 89% of the sample reported no identity theft.
 
-percentage<-prop.table(table(its$idtheft))
-x<-cbind(Count=table(its$idtheft), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
-
+x<-cbind(Count=table(its$idtheft),Percentage=round(prop.table(table(its$idtheft))*100))
+rbind(x,Total = c(nrow(its),100))
+      
 ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) + 
   geom_bar(stat = "count", fill="lightgreen") +
   stat_count(geom = "text", colour = "black", size = 3.5,
@@ -293,9 +291,8 @@ ggplot(data = its, aes(x = idtheft, y=..prop.., group=1)) +
 #in the past 12 months compared to 6.5% of those in household with annual incomes
 #of $24,999 or less.
 
-percentage<-prop.table(table(its$incomer))
-x<-cbind(Count=table(its$incomer), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$incomer),Percentage=round(prop.table(table(its$incomer))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=incomer, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -308,8 +305,8 @@ ggplot(its, aes(x=incomer, fill=idtheft))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
 
-#Race/Hispanic origin-71% of the sample were White while
-#One in ten (10%) respondents were Black. Hispanics
+#Race/Hispanic origin-Seventy-one percent (71%) of the sample were White while
+#one in ten (10%) respondents were Black. Hispanics
 #accounted for 13% of respondents. Persons who were of another
 #race accounted for 5% of the sample. Persons of 2 or more races 
 #accounted for 1% of the sample. Identity theft appeared to
@@ -317,9 +314,8 @@ ggplot(its, aes(x=incomer, fill=idtheft))+
 #of 2 or more races (14%) than Blacks (8%), Hispanics (7%) and
 #persons of other races (9%).
 
-percentage<-prop.table(table(its$ethnicr))
-x<-cbind(Count=table(its$ethnicr), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$ethnicr),Percentage=round(prop.table(table(its$ethnicr))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=ethnicr, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -332,15 +328,14 @@ ggplot(its, aes(x=ethnicr, fill=idtheft))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
 
-#Age-28% of the sample was age 50 to 64 while nearly one in four (24%) were
+#Age-Twenty-eight(28%) of the sample was age 50 to 64 while nearly one in four (24%) were
 #age 35 to 49. 23% of the sample was age 65 or older. The remainder of the
 #sample was under the age of 35.Thirteen percent (13%) of persons age 35 to 49 reported
 #past year identity theft, compared to 7% of persons age 18 to 34 and 9% of persons age 65
 #or older.
 
-percentage<-prop.table(table(its$ager))
-x<-cbind(Count=table(its$ager), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$ager),Percentage=round(prop.table(table(its$ager))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=ager, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -357,9 +352,8 @@ ggplot(its, aes(x=ager, fill=idtheft))+
 #remainder (47%) was male. Past year identity theft was experienced by
 #11% of males and a similar percentage of females.
 
-percentage<-prop.table(table(its$sexr))
-x<-cbind(Count=table(its$sexr), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$sexr),Percentage=round(prop.table(table(its$sexr))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=sexr, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -384,9 +378,8 @@ ggplot(its, aes(x=sexr, fill=idtheft))+
 #who reported no preventative behaviors reported identity theft in the past
 #year.
 
-percentage<-prop.table(table(its$prevent_total))
-x<-cbind(Count=table(its$prevent_total), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$prevent_total),Percentage=round(prop.table(table(its$prevent_total))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=prevent_total, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -399,7 +392,7 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
 
-#Identity theft prior to the past year- 13% of the sample experienced identity
+#Identity theft prior to the past year- Thirteen percent (13%) of the sample experienced identity
 #theft (misuse of an existing account, misuse of personal information to 
 #create new account or misuse of personal information for other fraudulent
 #purposes) prior to the 12 months prior to their ITS interview. 
@@ -409,9 +402,8 @@ ggplot(its, aes(x=prevent_total, fill=idtheft))+
 #did not have identity theft prior to the past 12 months experienced identity theft
 #in the past 12 months.
 
-percentage<-prop.table(table(its$OUTSIDE_PAST_YEARR))
-x<-cbind(Count=table(its$OUTSIDE_PAST_YEARR), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$OUTSIDE_PAST_YEARR),Percentage=round(prop.table(table(its$OUTSIDE_PAST_YEARR))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -435,9 +427,8 @@ ggplot(its, aes(x=OUTSIDE_PAST_YEARR, fill=idtheft))+
 #information was exposed in a data breach being victims of
 #past year identity theft.
 
-percentage<-prop.table(table(its$notify_breachr))
-x<-cbind(Count=table(its$notify_breachr), Percentage=round(percentage*100))
-rbind(Total = c(nrow(its),100),x)
+x<-cbind(Count=table(its$notify_breachr),Percentage=round(prop.table(table(its$notify_breachr))*100))
+rbind(x,Total = c(nrow(its),100))
 
 ggplot(its, aes(x=notify_breachr, fill=idtheft))+
   geom_bar(aes( y=..count../tapply(..count.., ..x.. ,sum)[..x..]), position="stack") +
@@ -450,8 +441,8 @@ ggplot(its, aes(x=notify_breachr, fill=idtheft))+
   scale_y_continuous(labels = scales::percent)+
   theme_clean()+labs(fill = "Past Year Identity Theft")
 
-#remove vectors used to make tables
-rm(x,percentage)
+#remove vector used to make tables
+rm(x)
 
 #creating datasets without missing data
 #separate out variables to be used
@@ -477,20 +468,15 @@ levels(notify_breachr)
 #combine individual variables into a dataset  
 its_clean<-cbind(data.frame(idtheft,incomer,ager,ethnicr,prevent_total,OUTSIDE_PAST_YEARR,notify_breachr,sexr))
 
-#check dataset
-summary(its_clean)
-
 #get number of incomplete & complete cases (no NAs)-
 #About 1% of the sample was an incomplete case (having a NA value 
 #on at least 1 variable). Removing incomplete cases left
 #95,516 cases in the dataset.
 incompletecases<-sum(!complete.cases(its_clean))
 completecases<-sum(complete.cases(its_clean))
-x<-c(incompletecases,completecases)
-percentage<-round(prop.table(x)*100)
-natable<-cbind(Number=x,Percent=percentage)
+natable<-cbind(Number=c(incompletecases,completecases),Percent=round(prop.table(c(incompletecases,completecases))*100))
 row.names(natable)<-c('Incomplete cases','Complete cases')
-rbind(Total=c(nrow(its_clean),100),natable)
+rbind(natable,Total=c(nrow(its_clean),100))
 
 #remove cases with NAs
 its_clean<-its_clean[complete.cases(its_clean),]
@@ -499,7 +485,7 @@ its_clean<-its_clean[complete.cases(its_clean),]
 summary(its_clean)
 
 #remove vectors used to create table and data with complete cases 
-rm(incompletecases,completecases,x,percentage,natable, 
+rm(incompletecases,completecases,natable, 
    ager,ethnicr,idtheft,incomer,notify_breachr,OUTSIDE_PAST_YEARR,
    prevent_total,sexr)
 
@@ -545,35 +531,33 @@ table(its_clean_num$notify_breachr)
 
 #create correlation matrix
 its_clean_cor<-round(cor(its_clean_num),2)
-#highest absolute value of a correlation (strongest correlation)
-max(abs(its_clean_cor[its_clean_cor !=1]))
 #create correlation heatmap
 melted_its_clean_cor<-melt(its_clean_cor)
 head(melted_its_clean_cor)
 #replace values with full names of variables
 melted_its_clean_cor$Var1<-recode_factor(melted_its_clean_cor$Var1,
                                          "idtheft"="Past year ID theft",
-                                         "incomer"="Household income",
+                                         "incomer"="Annual household income",
                                          "ager"="Age",
                                          "ethnicr"="Race/Hispanic origin",
-                                         "prevent_total"="Preventative behavior",
+                                         "prevent_total"="Preventative behaviors",
                                          "OUTSIDE_PAST_YEARR"="ID theft prior to past year",
                                          "notify_breachr"="Data breach victim",
                                          "sexr"="Sex")
 
 melted_its_clean_cor$Var2<-recode_factor(melted_its_clean_cor$Var2,
                                          "idtheft"="Past year ID theft",
-                                         "incomer"="Household income",
+                                         "incomer"="Annual household income",
                                          "ager"="Age",
                                          "ethnicr"="Race/Hispanic origin",
-                                         "prevent_total"="Preventative behavior",
+                                         "prevent_total"="Preventative behaviors",
                                          "OUTSIDE_PAST_YEARR"="ID theft prior to past year",
                                          "notify_breachr"="Data breach victim",
                                          "sexr"="Sex")
 
 ggplot(data = melted_its_clean_cor, aes(x=Var1, y=Var2, fill=value)) + 
-  ggtitle("Correlation Matrix of Variables")+
-  geom_tile()+ theme( axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+  ggtitle("Correlation Matrix of Variables")+geom_tile()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
   legend.title = element_blank(),axis.title=element_blank())+
   geom_text(aes(label=value), color="white")
 
@@ -600,30 +584,55 @@ sampleSplit<-sample.split(its_clean$idtheft,SplitRatio=0.7)
 trainSet<-its_clean[sampleSplit==TRUE,]
 #test dataset-30% of cases
 testSet<-its_clean[sampleSplit==FALSE,]
-#look at identity theft in train dataset
-percentage<-prop.table(table(trainSet$idtheft))
-x<-cbind(Count=table(trainSet$idtheft), Percentage=round(percentage*100))
-rbind(Total = c(nrow(trainSet),100),x)
-#look at identity theft in test dataset
-percentage<-prop.table(table(testSet$idtheft))
-x<-cbind(Count=table(testSet$idtheft), Percentage=round(percentage*100))
-rbind(Total = c(nrow(testSet),100),x)
 
-#train model
-model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
+#train model-no gender since it wasn't correlated with past year ID theft
+model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+prevent_total+notify_breachr
              ,data=trainSet,family="binomial")
 #look at model
 summary(model)
-#odds ratios for model
-exp(model$coeff)
-#variance inflation factors for model
-vif(model)
 
-#predicting in train data
-probabs<-predict(model,trainSet,type='response')
+#predict the probability of identity theft in test data
+model.probs<-predict(model,testSet,type = 'response')
+
+#create a vector of class predictions based on whether 
+#the predicted probability of being a victim of identity theft
+#is greater than or less than 0.11. 
+#(using 0.11 cause 11% of persons reported ID theft)
+model.pred=rep ("No past year ID theft",28654)
+model.pred[model.probs >.11]="Past Year ID theft"
+
+#predicting in test data
+probabs<-predict(model,testSet,type='response')
 #use .11 as cutoff since 11% of data reported ID theft
 preds<-ifelse(probabs>0.11,1,0)
-confusionMatrix(factor(preds),factor(as.numeric(trainSet$idtheft)-1))
+confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+
+#since preventative behaviors was giving contrary results in the EDA &
+#logistic regression model, another model was run without it
+#creating train and test data
+set.seed(123)
+sampleSplit<-sample.split(its_clean$idtheft,SplitRatio=0.7)
+#train dataset-70% of cases
+trainSet<-its_clean[sampleSplit==TRUE,]
+#test dataset-30% of cases
+testSet<-its_clean[sampleSplit==FALSE,]
+
+#train model-no gender or preventative behaviors
+model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
+           ,data=trainSet,family="binomial")
+#look at model
+summary(model)
+
+#odds ratios for model
+exp(model$coeff)
+
+#predict the probability of identity theft in test data
+model.probs<-predict(model,testSet,type = 'response')
+
+#create a vector of class predictions based on whether 
+#the predicted probability of being a victim of identity theft
+#is greater than or less than 0.11. 
+#(using 0.11 cause 11% of persons reported ID theft)
 
 #predicting in test data
 probabs<-predict(model,testSet,type='response')
@@ -636,3 +645,4 @@ myroc<-roc(testSet$idtheft,probabs)
 #the area under the ROC curve is 67% which indicates a poor model.
 auc(myroc)
 ggroc(myroc, color="black",linetype=2, size=1) + ggtitle("ROC curve")
+
