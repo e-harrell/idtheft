@@ -7,8 +7,7 @@ library(ggplot2)
 library(ggthemes)
 library(caret)
 library(caTools)
-library(pROC)
-
+library(Metrics)
 
 #Loading data
 #read in  R data from 2016 ITS downloaded from ICPSR website:
@@ -584,28 +583,20 @@ sampleSplit<-sample.split(its_clean$idtheft,SplitRatio=0.7)
 trainSet<-its_clean[sampleSplit==TRUE,]
 #test dataset-30% of cases
 testSet<-its_clean[sampleSplit==FALSE,]
-
 #train model-no gender since it wasn't correlated with past year ID theft
 model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+prevent_total+notify_breachr
              ,data=trainSet,family="binomial")
 #look at model
 summary(model)
-
-#predict the probability of identity theft in test data
-model.probs<-predict(model,testSet,type = 'response')
-
-#create a vector of class predictions based on whether 
-#the predicted probability of being a victim of identity theft
-#is greater than or less than 0.11. 
-#(using 0.11 cause 11% of persons reported ID theft)
-model.pred=rep ("No past year ID theft",28654)
-model.pred[model.probs >.11]="Past Year ID theft"
-
 #predicting in test data
 probabs<-predict(model,testSet,type='response')
 #use .11 as cutoff since 11% of data reported ID theft
 preds<-ifelse(probabs>0.11,1,0)
+#Accuracy score (57%), recall (.67), precision (.16) and f1 score (.25) reveal that the model is poor.
 confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+recall<-recall(as.numeric(testSet$idtheft)-1,preds)
+precision<-precision(as.numeric(testSet$idtheft)-1,preds)
+f1score<-2*((precision*recall)/(precision+recall))
 
 #since preventative behaviors was giving contrary results in the EDA &
 #logistic regression model, another model was run without it
@@ -616,33 +607,77 @@ sampleSplit<-sample.split(its_clean$idtheft,SplitRatio=0.7)
 trainSet<-its_clean[sampleSplit==TRUE,]
 #test dataset-30% of cases
 testSet<-its_clean[sampleSplit==FALSE,]
-
 #train model-no gender or preventative behaviors
 model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
            ,data=trainSet,family="binomial")
 #look at model
 summary(model)
-
-#odds ratios for model
-exp(model$coeff)
-
-#predict the probability of identity theft in test data
-model.probs<-predict(model,testSet,type = 'response')
-
-#create a vector of class predictions based on whether 
-#the predicted probability of being a victim of identity theft
-#is greater than or less than 0.11. 
-#(using 0.11 cause 11% of persons reported ID theft)
-
 #predicting in test data
 probabs<-predict(model,testSet,type='response')
 #use .11 as cutoff since 11% of data reported ID theft
 preds<-ifelse(probabs>0.11,1,0)
+#While the accuracy score (64%) and f1 score (.26) improved, the precision (.16)
+#remained the same while the recall (.57) declined.
 confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+recall<-recall(as.numeric(testSet$idtheft)-1,factor(preds))
+precision<-precision(as.numeric(testSet$idtheft)-1,factor(preds))
+f1score<-2*((precision*recall)/(precision+recall))
 
-#ROC curve
-myroc<-roc(testSet$idtheft,probabs)
-#the area under the ROC curve is 67% which indicates a poor model.
-auc(myroc)
-ggroc(myroc, color="black",linetype=2, size=1) + ggtitle("ROC curve")
+#Since the data is unbalanced in terms of the outcome variable (89% with no identity
+#theft vs 11% reporting identity theft in the past year), random undersampling 
+#of the cases where there was no identity theft, and keeping all of the
+#cases in which the respondent reported identity theft. This resulted in 
+#a dataset with an outcome variable that had the same number of cases in which the
+#respondent reported identity theft and respondents reported no past year identity theft.
+theft<-its_clean[its_clean$idtheft=="Past year ID theft",]
+notheft1<-its_clean[its_clean$idtheft!="Past year ID theft",]
+nrow(theft)
+notheft<-notheft1[sample(nrow(notheft1),10258),]
+newits<-rbind(theft,notheft)
+table(newits$idtheft)
+#running previous model over new data with balanced outcome variables
+set.seed(12)
+sampleSplit<-sample.split(newits$idtheft,SplitRatio=0.7)
+#train dataset-70% of cases
+trainSet<-newits[sampleSplit==TRUE,]
+#test dataset-30% of cases
+testSet<-newits[sampleSplit==FALSE,]
+#train model-no gender or preventative behaviors
+model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
+           ,data=trainSet,family="binomial")
+#look at model
+summary(model)
+probabs<-predict(model,testSet,type='response')
+preds<-ifelse(probabs>0.5,1,0)
+#While the accuracy score went down (62%), the f1 score (.60), precision (.62) 
+#and recall (.58) all increased compared to the previous 2 models showing that 
+#undersampling might be necessary for ITS data due to the 
+#imbalance of values in the outcome variable.
+confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+recall<-recall(as.numeric(testSet$idtheft)-1,factor(preds))
+precision<-precision(as.numeric(testSet$idtheft)-1,factor(preds))
+f1score<-2*((precision*recall)/(precision+recall))
 
+
+#Undersampled those that didn't have ID theft in the past year so that
+#outcome would have the same number of ID theft victims and non-victims
+#created new dataset
+theft<-its_clean[its_clean$idtheft=="Past year ID theft",]
+notheft1<-its_clean[its_clean$idtheft!="Past year ID theft",]
+nrow(theft)
+notheft<-notheft1[sample(nrow(notheft1),10258),]
+newits<-rbind(theft,notheft)
+table(newits$idtheft)
+set.seed(12)
+sampleSplit<-sample.split(newits$idtheft,SplitRatio=0.7)
+trainSet<-newits[sampleSplit==TRUE,]
+testSet<-newits[sampleSplit==FALSE,]
+model<-glm(idtheft~incomer+ager+ethnicr+OUTSIDE_PAST_YEARR+notify_breachr
+           ,data=trainSet,family="binomial")
+summary(model)
+probabs<-predict(model,testSet,type='response')
+preds<-ifelse(probabs>0.5,1,0)
+confusionMatrix(factor(preds),factor(as.numeric(testSet$idtheft)-1))
+recall<-recall(as.numeric(testSet$idtheft)-1,factor(preds))
+precision<-precision(as.numeric(testSet$idtheft)-1,factor(preds))
+f1score<-2*((precision*recall)/(precision+recall))
